@@ -19,6 +19,7 @@ const baseURL = 'https://hostless.dev'
 const username = 'test_username'
 const password = 'test_password'
 const auth = { username, password } as Auth
+const maxContentLength = 100_000_000;
 
 const strContent = 'string content'
 const jsonContent = {
@@ -163,6 +164,7 @@ describe('FissionUser', () => {
         headers: {
           'content-type': 'application/octet-stream'
         },
+        maxContentLength,
         auth: {
           username,
           password
@@ -208,6 +210,7 @@ describe('FissionUser', () => {
         headers: {
           'content-type': 'application/octet-stream'
         },
+        maxContentLength,
         auth: {
           username,
           password
