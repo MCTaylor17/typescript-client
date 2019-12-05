@@ -1,9 +1,10 @@
 import axios from 'axios'
 import { Value as JSONValue } from 'json-typescript'
+import { FileSizeError } from "./FissionErrors"
 
 const BASE_URL_DEFAULT: string = 'https://hostless.dev'
 const BYTES_PER_MEGABYTE: number = 1_000_000
-const MAX_CONTENT_LENGTH: ByteLength = 100 * BYTES_PER_MEGABYTE;
+const MAX_CONTENT_LENGTH: ByteLength = 100 * BYTES_PER_MEGABYTE
 
 export type Content = JSONValue
 export type Upload = JSONValue | File
@@ -38,12 +39,23 @@ export const add = async (
   const headers = { 'content-type': 'application/octet-stream' }
   const maxContentLength = MAX_CONTENT_LENGTH;
   const nameStr = name ? `?name=${name}` : ''
-  const { data } = await axios.post<CID>(`${baseURL}/ipfs${nameStr}`, content, {
+  const axiosOptions = {
     headers,
     maxContentLength,
     auth
-  })
-  return data
+  }
+  
+  try {
+    const { data } = await axios.post<CID>(`${baseURL}/ipfs${nameStr}`, content, axiosOptions)
+    return data
+  } catch (err) {
+    switch (err.message) {
+      case "Request body larger than maxBodyLength limit":
+        throw new FileSizeError(err)
+      default:
+        throw err
+    }
+  }
 }
 
 export const remove = async (cid: CID, auth: Auth, baseURL = BASE_URL_DEFAULT) => {
