@@ -1,11 +1,14 @@
 import axios from 'axios'
 import { Value as JSONValue } from 'json-typescript'
 
-const BASE_URL_DEFAULT = 'https://hostless.dev'
+const BASE_URL_DEFAULT: string = 'https://hostless.dev'
+const BYTES_PER_MEGABYTE: number = 1_000_000
+const MAX_CONTENT_LENGTH: ByteLength = 100 * BYTES_PER_MEGABYTE;
 
 export type Content = JSONValue
 export type Upload = JSONValue | File
 export type CID = string
+export type ByteLength = number
 export type Auth = {
   username: string
   password: string
@@ -33,9 +36,11 @@ export const add = async (
   name?: string
 ): Promise<CID> => {
   const headers = { 'content-type': 'application/octet-stream' }
+  const maxContentLength = MAX_CONTENT_LENGTH;
   const nameStr = name ? `?name=${name}` : ''
   const { data } = await axios.post<CID>(`${baseURL}/ipfs${nameStr}`, content, {
     headers,
+    maxContentLength,
     auth
   })
   return data
