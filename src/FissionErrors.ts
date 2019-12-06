@@ -1,13 +1,13 @@
-type ByteLength = number
+export type ByteLength = number
 
-interface AxiosError extends Error {
-  isAxiosError: boolean
-  config: {
-    headers: {
-      "Content-Length": ByteLength
+export interface AxiosError extends Error {
+    isAxiosError: boolean
+    config: {
+        headers: {
+            "Content-Length": ByteLength
+        }
+        maxContentLength: ByteLength
     }
-    maxContentLength: ByteLength
-  }
 }
 
 export class FileSizeError extends Error {
@@ -17,19 +17,25 @@ export class FileSizeError extends Error {
   private axiosError: AxiosError
   private AXIOS_DEFAULT_MAXIMUM = 10_000_000;
 
+  // Impossible to cover branch on super()
+  /* istanbul ignore next */
   constructor(axiosError: AxiosError) {
-    super("File size limit exceeded");
-    this.axiosError = axiosError;
-    this.fileSizeBytes = this.extractFileSize()
-    this.maxFileSizeBytes = this.extractMaxFileSize();
-    this.details = this.constructDetails();
-  }
+      super("File size limit exceeded");    
+      
+      // https://github.com/facebook/jest/issues/8279
+      Object.setPrototypeOf(this, Error.prototype);
+      
+      this.axiosError = axiosError;
+      this.fileSizeBytes = this.extractFileSize()
+      this.maxFileSizeBytes = this.extractMaxFileSize();
+      this.details = this.constructDetails();
+    }
   
-  private extractFileSize() {
+  private extractFileSize = () => {
     return this.axiosError.config.headers["Content-Length"];
   }
 
-  private extractMaxFileSize(): ByteLength {
+  private extractMaxFileSize = (): ByteLength => {
     let maxFileSizeBytes = this.axiosError.config.maxContentLength;
     
     if(maxFileSizeBytes === -1) {
@@ -39,17 +45,17 @@ export class FileSizeError extends Error {
     return maxFileSizeBytes;
   }
   
-  private humanReadable(bytes: number): string {
+  private humanReadable = (bytes: number): string => {
     return (bytes / 1_000_000).toFixed(1) + "MB";
   }
 
-  private constructDetails(): string {
+  private constructDetails = (): string => {
     const fileSize = this.humanReadable(this.fileSizeBytes);
     const maxSize = this.humanReadable(this.maxFileSizeBytes);
     const overage = this.humanReadable(this.fileSizeBytes - this.maxFileSizeBytes);
     
     return `---
-Oh no, the file you tried to add is too big 😲  
+Oh no, the file you tried to add is too big 😲
 You tried sending ${fileSize} but your current max is ${maxSize}.
 That means your file was ${overage} too big 😟
 
